@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>CleanTemplate.Common</name>
+    </assembly>
+    <members>
+        <member name="T:CleanTemplate.Common.Exceptions.ExistingRecordException">
+            <summary>
+            Exception thrown when attempting to create a record that already exists.
+            Typically raised from repository implementations.
+            </summary>
+        </member>
+        <member name="M:CleanTemplate.Common.Exceptions.ExistingRecordException.#ctor">
+            <summary>Creates a new instance of the exception.</summary>
+        </member>
+        <member name="M:CleanTemplate.Common.Exceptions.ExistingRecordException.#ctor(System.String)">
+            <summary>Creates the exception with a custom message.</summary>
+        </member>
+        <member name="M:CleanTemplate.Common.Exceptions.ExistingRecordException.#ctor(System.String,System.Exception)">
+            <summary>Creates the exception with a message and inner exception.</summary>
+        </member>
+        <member name="M:CleanTemplate.Common.Exceptions.ExistingRecordException.#ctor(System.String,System.Object)">
+            <summary>Creates the exception based on the entity name and key.</summary>
+        </member>
+        <member name="M:CleanTemplate.Common.Utilities.ModelBuilderExtensions.AddRestrictDeleteBehaviorConvention(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <summary>
+            Set DeleteBehavior.Restrict by default for relations
+            </summary>
+            <param name="modelBuilder"></param>
+        </member>
+        <member name="M:CleanTemplate.Common.Utilities.ModelBuilderExtensions.RegisterEntityTypeConfiguration(Microsoft.EntityFrameworkCore.ModelBuilder,System.Reflection.Assembly[])">
+            <summary>
+            Dynamicaly load all IEntityTypeConfiguration with Reflection
+            </summary>
+            <param name="modelBuilder"></param>
+            <param name="assemblies">Assemblies contains Entities</param>
+        </member>
+        <member name="M:CleanTemplate.Common.Utilities.ModelBuilderExtensions.RegisterAllEntities``1(Microsoft.EntityFrameworkCore.ModelBuilder,System.Reflection.Assembly[])">
+            <summary>
+            Dynamicaly register all Entities that inherit from specific BaseType
+            </summary>
+            <param name="modelBuilder"></param>
+            <param name="baseType">Base type that Entities inherit from this</param>
+            <param name="assemblies">Assemblies contains Entities</param>
+        </member>
+    </members>
+</doc>

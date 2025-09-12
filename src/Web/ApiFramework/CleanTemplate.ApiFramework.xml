@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>CleanTemplate.ApiFramework</name>
+    </assembly>
+    <members>
+        <member name="T:CleanTemplate.ApiFramework.Attributes.ValidateModelStateAttribute">
+            <summary>
+            Action filter that validates <see cref="!:ActionExecutingContext.ModelState"/> before
+            a controller action runs. Applied to controllers through filters registration.
+            </summary>
+        </member>
+        <member name="M:CleanTemplate.ApiFramework.Attributes.ValidateModelStateAttribute.OnActionExecuting(Microsoft.AspNetCore.Mvc.Filters.ActionExecutingContext)">
+            <summary>
+            Executes before the controller action. If the model state is invalid a
+            <see cref="T:CleanTemplate.ApiFramework.Tools.ApiResult"/> containing the validation errors is returned and the
+            action is short-circuited.
+            </summary>
+            <param name="context">Current action context supplied by ASP.NET Core.</param>
+        </member>
+        <member name="T:CleanTemplate.ApiFramework.Tools.ApiResult">
+            <summary>
+            Convenience wrapper for creating an <see cref="T:CleanTemplate.ApiFramework.Tools.ApiResult`1"/> without
+            specifying the generic type. Used by controllers to return data in a
+            consistent envelope.
+            </summary>
+        </member>
+        <member name="M:CleanTemplate.ApiFramework.Tools.ApiResult.#ctor(System.Object,System.Int32,System.String[])">
+            <summary>
+            Creates an API result for non-generic data payloads.
+            </summary>
+        </member>
+        <member name="T:CleanTemplate.ApiFramework.Tools.ApiResult`1">
+            <summary>
+            Standard response envelope used by controllers to return data and
+            errors with a status code.
+            </summary>
+        </member>
+        <member name="P:CleanTemplate.ApiFramework.Tools.ApiResult`1.Errors">
+            <summary>List of validation or processing errors.</summary>
+        </member>
+        <member name="P:CleanTemplate.ApiFramework.Tools.ApiResult`1.Data">
+            <summary>Payload being returned to the client.</summary>
+        </member>
+        <member name="P:CleanTemplate.ApiFramework.Tools.ApiResult`1.StatusCode">
+            <summary>HTTP status code for the response.</summary>
+        </member>
+        <member name="M:CleanTemplate.ApiFramework.Tools.ApiResult`1.#ctor(`0,System.Int32,System.String[])">
+            <summary>
+            Initializes a new <see cref="T:CleanTemplate.ApiFramework.Tools.ApiResult`1"/>.
+            </summary>
+        </member>
+        <member name="M:CleanTemplate.ApiFramework.Tools.ApiResult`1.ExecuteResultAsync(Microsoft.AspNetCore.Mvc.ActionContext)">
+            <summary>
+            Writes the result to the HTTP response via <see cref="T:Microsoft.AspNetCore.Mvc.OkObjectResult"/>.
+            </summary>
+        </member>
+        <member name="M:CleanTemplate.ApiFramework.Tools.ApiResult`1.Dispose">
+            <summary>
+            Disposes the payload if it implements <see cref="T:System.IDisposable"/>.
+            </summary>
+        </member>
+    </members>
+</doc>
