@@ -1,5 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Hosting;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
+using Polly;
+using Polly.Extensions.Http;
 
 namespace CleanTemplate.Api
 {
@@ -32,6 +36,7 @@ namespace CleanTemplate.Api
     using System;
     using System.Linq;
     using System.Net;
+    using System.Net.Http;
     using System.Reflection;
     using System.Security.Claims;
     using System.Text;
@@ -44,6 +49,15 @@ namespace CleanTemplate.Api
             services.Configure<SiteSettings>(configuration.GetSection(nameof(SiteSettings)));
             var appOptions = configuration.GetSection(nameof(AppOptions)).Get<AppOptions>();
             var distributedCacheConfig = configuration.GetSection(nameof(DistributedCacheConfig)).Get<DistributedCacheConfig>();
+
+            var corsOrigins = configuration.GetSection("Cors:Origins").Get<string[]>() ?? Array.Empty<string>();
+            services.AddCors(options =>
+            {
+                options.AddPolicy("DefaultCorsPolicy", policy =>
+                    policy.WithOrigins(corsOrigins)
+                          .AllowAnyHeader()
+                          .AllowAnyMethod());
+            });
 
             services.AddApiVersioning(o =>
             {
@@ -61,11 +75,39 @@ namespace CleanTemplate.Api
             services.AddPolyCache(configuration);
             services.AddCustomFluentValidation();
 
-            services.AddHealthChecks()
-                    .AddSqlServer(appOptions.WriteDatabaseConnectionString)
-                    .AddRedis(distributedCacheConfig.ConnectionString);
-            services.AddHealthChecksUI()
-                    .AddInMemoryStorage();
+            var health = services.AddHealthChecks();
+            health.AddCheck("self", () => Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy(), new[] { "live" });
+            if (!string.IsNullOrEmpty(appOptions?.WriteDatabaseConnectionString))
+            {
+                health.AddSqlServer(appOptions.WriteDatabaseConnectionString, tags: new[] { "ready" });
+            }
+            if (!string.IsNullOrEmpty(distributedCacheConfig?.ConnectionString))
+            {
+                health.AddRedis(distributedCacheConfig.ConnectionString, tags: new[] { "ready" });
+            }
+            services.AddHealthChecksUI().AddInMemoryStorage();
+
+            services.AddOpenTelemetry()
+                .WithTracing(builder =>
+                {
+                    builder.AddAspNetCoreInstrumentation();
+                    builder.AddHttpClientInstrumentation();
+                    var endpoint = configuration["OpenTelemetry:OtlpEndpoint"];
+                    if (!string.IsNullOrWhiteSpace(endpoint))
+                    {
+                        builder.AddOtlpExporter(o => o.Endpoint = new Uri(endpoint));
+                    }
+                })
+                .WithMetrics(builder =>
+                {
+                    builder.AddAspNetCoreInstrumentation();
+                    builder.AddHttpClientInstrumentation();
+                    builder.AddRuntimeInstrumentation();
+                    builder.AddPrometheusExporter();
+                });
+
+            services.AddHttpClient("default")
+                .AddPolicyHandler(GetRetryPolicy());
 
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(PerformanceBehaviour<,>));
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
@@ -81,17 +123,27 @@ namespace CleanTemplate.Api
             IConfiguration configuration,
             IWebHostEnvironment env)
         {
-            app.UseCors(builder =>
+            if (!env.IsDevelopment())
             {
-                builder
-                .AllowAnyOrigin()
-                .AllowAnyMethod()
-                .AllowAnyHeader();
+                app.UseHsts();
+            }
+            app.UseHttpsRedirection();
+
+            app.Use(async (ctx, next) =>
+            {
+                ctx.Response.Headers["X-Content-Type-Options"] = "nosniff";
+                ctx.Response.Headers["X-Frame-Options"] = "DENY";
+                ctx.Response.Headers["X-XSS-Protection"] = "1; mode=block";
+                ctx.Response.Headers["Content-Security-Policy"] = "default-src 'self'";
+                await next();
             });
+
+            app.UseCors("DefaultCorsPolicy");
 
             app.UseAppSwagger(configuration);
             app.UseStaticFiles();
             app.UseRouting();
+            app.UseOpenTelemetryPrometheusScrapingEndpoint();
 
             app.UseAuthentication();
             app.UseAuthorization();
@@ -115,13 +167,27 @@ namespace CleanTemplate.Api
                 }
 
                 endpoints.MapHealthChecksUI();
-                endpoints.MapHealthChecks("/health", new HealthCheckOptions()
+                endpoints.MapHealthChecks("/health/live", new HealthCheckOptions
                 {
+                    Predicate = r => r.Tags.Contains("live")
+                });
+                endpoints.MapHealthChecks("/health/ready", new HealthCheckOptions
+                {
+                    Predicate = r => r.Tags.Contains("ready"),
                     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
                 });
             });
 
             return app;
+        }
+
+        private static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
+        {
+            return HttpPolicyExtensions
+                .HandleTransientHttpError()
+                .WaitAndRetryAsync(3, retry =>
+                    TimeSpan.FromMilliseconds(200 * Math.Pow(2, retry)) +
+                    TimeSpan.FromMilliseconds(Random.Shared.Next(0, 100)));
         }
 
         #region Swagger

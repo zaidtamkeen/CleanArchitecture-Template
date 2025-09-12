@@ -5,34 +5,34 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AspNetCore.HealthChecks.Redis" Version="8.0.1" />
-    <PackageReference Include="AspNetCore.HealthChecks.SqlServer" Version="8.0.2" />
-    <PackageReference Include="AspNetCore.HealthChecks.UI" Version="8.0.1" />
-    <PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="8.0.1" />
-	  <PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="8.0.1" />
-	  <PackageReference Include="Mapster" Version="7.4.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.HealthChecks" Version="2.2.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.7" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning.ApiExplorer" Version="5.1.0" />
-    <PackageReference Include="Pluralize.NET" Version="1.0.2" />
-    <PackageReference Include="IdentityServer4.AccessTokenValidation" Version="3.0.1" />
-    <PackageReference Include="Swashbuckle.AspNetCore.ReDoc" Version="6.6.2" />
-    <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="9.0.0" />
-    <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" Version="5.1.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.7">
+    <PackageReference Include="AspNetCore.HealthChecks.Redis" />
+    <PackageReference Include="AspNetCore.HealthChecks.SqlServer" />
+    <PackageReference Include="AspNetCore.HealthChecks.UI" />
+    <PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage" />
+	  <PackageReference Include="AspNetCore.HealthChecks.UI.Client" />
+	  <PackageReference Include="Mapster" />
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.HealthChecks" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning.ApiExplorer" />
+    <PackageReference Include="Pluralize.NET" />
+    <PackageReference Include="IdentityServer4.AccessTokenValidation" />
+    <PackageReference Include="Swashbuckle.AspNetCore.ReDoc" />
+    <PackageReference Include="Autofac.Extensions.DependencyInjection" />
+    <PackageReference Include="FluentValidation.AspNetCore" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.7" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
-    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.6.2" />
-    <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="6.6.2" />
-    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.6.2" />
-    <PackageReference Include="Serilog.AspNetCore" Version="8.0.1" />
-    <PackageReference Include="Serilog.Settings.Configuration" Version="8.0.2" />
-    <PackageReference Include="Serilog.Sinks.Elasticsearch" Version="10.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Swagger" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" />
+    <PackageReference Include="Serilog.AspNetCore" />
+    <PackageReference Include="Serilog.Settings.Configuration" />
+    <PackageReference Include="Serilog.Sinks.Elasticsearch" />
   </ItemGroup>
 
   <ItemGroup>
