@@ -8,7 +8,8 @@ If you find value in this project, whether you're using it for learning or kicks
 
 # Prerequisites
 - Visual Studio 2022
-- .NET 8.0 Runtime
+- .NET 8.0 SDK
+- Docker (optional for container builds)
 
 # Effortless Project Creation
 Here's the simplest way to get started with your project:
@@ -54,6 +55,17 @@ For health check administration, utilize the following URL:
 * Mapper
 * Docker
 * xUnit
+
+## Build and Test
+
+```bash
+dotnet restore
+dotnet build CleanTemplate.sln -c Release
+dotnet test CleanTemplate.sln -c Release --collect:"XPlat Code Coverage" --results-directory ./reports/tests
+~/.dotnet/tools/reportgenerator -reports:reports/tests/**/coverage.cobertura.xml -targetdir:reports/coverage -reporttypes:Html
+# Docker build (requires Docker daemon)
+docker build -t clean-template:dev -f src/Web/Api/Dockerfile .
+```
 
 ## Championing Best Practices and Design Principles:
 
