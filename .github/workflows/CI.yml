@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      COVERAGE_MIN: 75
     steps:
       - uses: actions/checkout@v3
       - name: Setup .NET
@@ -16,22 +18,36 @@ jobs:
           dotnet-version: 8.0.x
           cache: true
       - name: Restore
-        run: dotnet restore CleanTemplate.sln
+        run: |
+          dotnet restore CleanTemplate.sln
+          dotnet tool restore
       - name: Build
         run: dotnet build CleanTemplate.sln -c Release --no-restore
       - name: Test
-        run: dotnet test CleanTemplate.sln -c Release --no-build --collect:"XPlat Code Coverage" --results-directory ./TestResults
+        run: dotnet test CleanTemplate.sln -c Release --no-build --collect:"XPlat Code Coverage" --results-directory ./reports/tests
       - name: Generate coverage report
         run: |
-          dotnet tool install --global dotnet-reportgenerator-globaltool
-          reportgenerator -reports:TestResults/**/coverage.cobertura.xml -targetdir:TestResults/coverage -reporttypes:Html
+          dotnet tool run reportgenerator "-reports:**/coverage.cobertura.xml" "-targetdir:./reports/coverage" "-reporttypes:HtmlInline_AzurePipelines;Cobertura"
+      - name: Verify Coverage
+        run: |
+          python - <<'PY'
+import xml.etree.ElementTree as ET, sys
+root=ET.parse('reports/coverage/Cobertura.xml').getroot()
+coverage=float(root.attrib['line-rate'])*100
+threshold=float('${{ env.COVERAGE_MIN }}')
+print(f'Total line coverage: {coverage:.2f}%')
+if coverage < threshold:
+    print(f'Coverage below threshold {threshold}%')
+    sys.exit(1)
+print('Coverage OK')
+PY
       - name: Upload Test Results
         uses: actions/upload-artifact@v3
         with:
           name: test-results
-          path: TestResults
+          path: reports/tests
       - name: Upload Coverage Report
         uses: actions/upload-artifact@v3
         with:
           name: coverage-html
-          path: TestResults/coverage
+          path: reports/coverage

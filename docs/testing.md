@@ -4,8 +4,12 @@ The solution includes unit tests and end-to-end tests.
 
 ## Running Tests
 ```bash
-dotnet test CleanTemplate.sln -c Release --collect:"XPlat Code Coverage" --results-directory ./reports/tests
-~/.dotnet/tools/reportgenerator -reports:reports/tests/**/coverage.cobertura.xml -targetdir:reports/coverage -reporttypes:Html
+./scripts/dev-restore.sh
+./scripts/dev-build.sh
+./scripts/dev-test.sh
 ```
 
 Coverage reports are generated under `reports/coverage`.
+
+## Metrics Endpoint
+When the API is running, Prometheus metrics are exposed at `http://localhost:5000/metrics` (or the configured port).

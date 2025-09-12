@@ -38,6 +38,9 @@ To handle database migration with finesse:
 For health check administration, utilize the following URL:
 [https://Url:Port/healthchecks-ui](https://Url:Port/healthchecks-ui)
 
+Prometheus metrics are exposed at `/metrics` and can be scraped by tools like
+Prometheus or manually inspected in a browser.
+
 ## Technologies at Play:
 
 * ASP.NET Core
@@ -59,10 +62,9 @@ For health check administration, utilize the following URL:
 ## Build and Test
 
 ```bash
-dotnet restore
-dotnet build CleanTemplate.sln -c Release
-dotnet test CleanTemplate.sln -c Release --collect:"XPlat Code Coverage" --results-directory ./reports/tests
-~/.dotnet/tools/reportgenerator -reports:reports/tests/**/coverage.cobertura.xml -targetdir:reports/coverage -reporttypes:Html
+./scripts/dev-restore.sh
+./scripts/dev-build.sh
+./scripts/dev-test.sh
 # Docker build (requires Docker daemon)
 docker build -t clean-template:dev -f src/Web/Api/Dockerfile .
 ```
@@ -92,3 +94,10 @@ docker build -t clean-template:dev -f src/Web/Api/Dockerfile .
 3. [Why We Need Clean Architecture?](https://www.youtube.com/watch?v=GO61-MiWirk&t=17s)
 
 Elevate your development journey with the CleanArchitecture-Template Plus!
+
+## Additional Documentation
+
+- [Security](docs/security.md)
+- [Release Process](docs/release.md)
+- [Testing](docs/testing.md)
+- [Final Verification Checklist](reports/final-verification.md)

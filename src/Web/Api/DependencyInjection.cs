@@ -4,6 +4,8 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using Polly;
 using Polly.Extensions.Http;
+using Microsoft.AspNetCore.RateLimiting;
+using Prometheus;
 
 namespace CleanTemplate.Api
 {
@@ -106,6 +108,17 @@ namespace CleanTemplate.Api
                     builder.AddPrometheusExporter();
                 });
 
+            var rateSection = configuration.GetSection("RateLimiting:FixedWindow");
+            services.AddRateLimiter(options =>
+            {
+                options.AddFixedWindowLimiter("fixed", opts =>
+                {
+                    opts.PermitLimit = rateSection.GetValue<int>("PermitLimit", 100);
+                    opts.Window = TimeSpan.FromSeconds(rateSection.GetValue<int>("WindowSeconds", 60));
+                    opts.QueueLimit = rateSection.GetValue<int>("QueueLimit", 0);
+                });
+            });
+
             services.AddHttpClient("default")
                 .AddPolicyHandler(GetRetryPolicy());
 
@@ -143,7 +156,7 @@ namespace CleanTemplate.Api
             app.UseAppSwagger(configuration);
             app.UseStaticFiles();
             app.UseRouting();
-            app.UseOpenTelemetryPrometheusScrapingEndpoint();
+            app.UseRateLimiter();
 
             app.UseAuthentication();
             app.UseAuthorization();
@@ -159,11 +172,11 @@ namespace CleanTemplate.Api
             {
                 if (env.IsDevelopment() || env.IsStaging())
                 {
-                    endpoints.MapControllers().AllowAnonymous();
+                    endpoints.MapControllers().AllowAnonymous().RequireRateLimiting("fixed");
                 }
                 else
                 {
-                    endpoints.MapControllers();
+                    endpoints.MapControllers().RequireRateLimiting("fixed");
                 }
 
                 endpoints.MapHealthChecksUI();
@@ -176,6 +189,7 @@ namespace CleanTemplate.Api
                     Predicate = r => r.Tags.Contains("ready"),
                     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
                 });
+                endpoints.MapPrometheusScrapingEndpoint();
             });
 
             return app;
