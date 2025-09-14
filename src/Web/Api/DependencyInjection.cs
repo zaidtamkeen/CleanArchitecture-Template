@@ -169,9 +169,9 @@ namespace CleanTemplate.Api
                     Description = "This is a solution template for Clean Architecture implementation with ASP.NET Core Web Api",
                     Contact = new OpenApiContact
                     {
-                        Name = "Omid Ahmadpour",
-                        Email = "ahmadpooromid@gmail.com",
-                        Url = new Uri("https://github.com/omid-ahmadpour"),
+                        Name = "Tamkeen IT Team",
+                        Email = "IT2@tamkeen.com.ye",
+                        Url = new Uri("https://www.tamkeen.com.ye"),
                     },
                 });
                 options.SwaggerDoc("v2", new OpenApiInfo
@@ -181,9 +181,9 @@ namespace CleanTemplate.Api
                     Description = "This is a solution template for Clean Architecture implementation with ASP.NET Core Web Api",
                     Contact = new OpenApiContact
                     {
-                        Name = "Omid Ahmadpour",
-                        Email = "ahmadpooromid@gmail.com",
-                        Url = new Uri("https://github.com/omid-ahmadpour"),
+                        Name = "Tamkeen IT Team",
+                        Email = "IT2@tamkeen.com.ye",
+                        Url = new Uri("https://www.tamkeen.com.ye"),
                     },
                 });
 

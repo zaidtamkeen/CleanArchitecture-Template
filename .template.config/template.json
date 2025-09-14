@@ -1,14 +1,14 @@
 {
   "$schema": "http://json.schemastore.org/template",
-  "author": "Omid Ahmadpour",
+  "author": "Tamkeen IT Team",
   "classifications": [ ".NET Core", "ASP.NET", "WEB API" ],
   "name": "ASPNET Clean Template",
-  "identity": "ASPNETCleanTemplate.nuspec",
-  "groupIdentity": "ASPNETCleanTemplate",
-  "shortName": "aspnetcleantemplate",
+  "identity": "ASPNETCleanWithoutIdentityTemplate.nuspec",
+  "groupIdentity": "ASPNETCleanWithoutIdentityTemplate",
+  "shortName": "ASPNETCleanWithoutIdentityTemplate",
   "tags": {
     "language": "C#",
-	"type":"project"
+    "type": "project"
   },
   "sourceName": "CleanTemplate",
   "preferNameDirectory": true,
