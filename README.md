@@ -24,12 +24,62 @@ Here's the simplest way to get started with your project:
    dotnet new aspnetcleantemplate -n MyNewCleanTemplate
    ```
 
-# Smooth Database Migration:
-To handle database migration with finesse:
+## الهوية والتفويض عبر Tamkeen.IdentityService
 
-1. Set the default project to **Persistence**.
-2. Open the Package Manager Console and run:
+- لا يوجد أي إدارة محلية للمستخدمين/الأدوار داخل هذا الـ Template.
+- يعتمد القالب على JwtBearer للتحقق من التوكين الصادر من Tamkeen.IdentityService.
+- إعدادات الهوية في appsettings.json:
+
+````json
+{
+  "Identity": {
+    "Authority": "https://identity.tamkeen.example",
+    "Audience": "tamkeen.api",
+    "RequireHttpsMetadata": true
+  },
+  "Auth": {
+    "ServiceName": "Tamkeen.FundTransferLimits"
+  }
+}
+````
+
+### تفعيل الاتصال عبر gRPC
+- لتفعيل الاتصال عبر gRPC بدلاً من REST، اضبط `Identity:Transport` إلى `Grpc` وأكمل إعدادات العنوان والشهادة في `appsettings.*`.
+- راجع دليل الإعداد السريع: `docs/GRPC_SETUP.md`.
+
+
+- السياسات ديناميكية بالاسم: يمكنك استخدام الصيغتين في الـ Attribute:
+  - Permission:<PermissionName> مثل: `Permission:Products.Read` أو `Permission:Tamkeen.FundTransferLimits.Read`.
+  - Scope:<scope-name> مثل: `Scope:fundtransferlimits.read`.
+- كما توجد دوال مساعدة:
+  - `AuthorizationPolicies.Permission("Products.Read")`
+  - `AuthorizationPolicies.Scope("fundtransferlimits.read")`
+
+مثال على التحكم في صلاحيات الـ Controllers:
+
+<augment_code_snippet mode="EXCERPT" path="src/Web/Api/Controllers/v1/Products/ProductController.cs">
+````csharp
+[Authorize(Policy = "Permission:Products.Read")]
+public async Task<IActionResult> GetByIdAsync([FromQuery] int productId) { ... }
+````
+</augment_code_snippet>
+
+مثال تكامل PayMobile عبر تدفق Client Credentials:
+
+<augment_code_snippet mode="EXCERPT" path="src/Web/Api/Controllers/v1/Integrations/PayMobileController.cs">
+````csharp
+[Authorize(Policy = "Scope:paymobile.transfer")]
+[HttpGet("paymobile/balance")] public Task<IActionResult> GetBalance([FromQuery] string accountId) { ... }
+````
+</augment_code_snippet>
+
+# Database Migrations (اختياري)
+لا يتضمن القالب جداول مستخدمين/أدوار. يمكنك إنشاء هجرات للكيانات الدومينية الخاصة بك (مثل Products) عند الحاجة:
+
+1. عيّن مشروع **Persistence** كمشروع افتراضي.
+2. من Package Manager Console نفّذ:
    ```shell
+   Add-Migration Init -Context AppDbContext
    Update-Database -Context AppDbContext
    ```
 
@@ -44,8 +94,8 @@ For health check administration, utilize the following URL:
 * MediatR
 * Swagger
 * Redis (for distributed caching)
-* Jwt Token Authentication
-* Custom Asp.Net Identity
+* Jwt Bearer Authentication (external)
+* External Identity via Tamkeen.IdentityService
 * Api Versioning
 * FluentValidation
 * PolyCache (for caching)

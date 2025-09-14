@@ -24,7 +24,7 @@ namespace CleanTemplate.Api.EndToEndTests
         public async Task GetByIdEndpoint_Should_ReturnOk(string url)
         {
             // Arrange
-            var client = _factory.CreateClient();
+            var client = _factory.WithWebHostBuilder(b => b.UseSetting(Microsoft.AspNetCore.Hosting.WebHostDefaults.EnvironmentKey, Microsoft.Extensions.Hosting.Environments.Development)).CreateClient();
 
             // Act
             var response = await client.GetAsync(url);
@@ -38,7 +38,7 @@ namespace CleanTemplate.Api.EndToEndTests
         public async Task GetAllEndpoint_Should_ReturnOk(string url)
         {
             // Arrange
-            var client = _factory.CreateClient();
+            var client = _factory.WithWebHostBuilder(b => b.UseSetting(Microsoft.AspNetCore.Hosting.WebHostDefaults.EnvironmentKey, Microsoft.Extensions.Hosting.Environments.Development)).CreateClient();
 
             // Act
             var response = await client.GetAsync(url);
@@ -51,7 +51,7 @@ namespace CleanTemplate.Api.EndToEndTests
         public async Task AddEndpoint_Should_ReturnOk(string name, decimal price)
         {
             // Arrange
-            var client = _factory.CreateClient();
+            var client = _factory.WithWebHostBuilder(b => b.UseSetting(Microsoft.AspNetCore.Hosting.WebHostDefaults.EnvironmentKey, Microsoft.Extensions.Hosting.Environments.Development)).CreateClient();
             const string url = "/api/v1/Product";
             var request = new AddProductRequest { Name = name, Price = price };
             var json = JsonConvert.SerializeObject(request);

@@ -10,6 +10,9 @@ namespace CleanTemplate.Persistence.Configuration.Products
         {
             builder.ToTable(nameof(Product));
             builder.HasKey(k => k.Id);
+
+            // Ensure decimal precision for Price to avoid truncation warnings/errors
+            builder.Property(p => p.Price).HasPrecision(18, 2);
         }
     }
 }

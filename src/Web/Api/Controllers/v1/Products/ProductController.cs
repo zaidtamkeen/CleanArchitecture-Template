@@ -16,6 +16,7 @@ namespace CleanTemplate.Api.Controllers.v1.Products
     [ApiVersion("1")]
     public class ProductController : BaseControllerV1
     {
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "Permission:Products.Manage")]
         [HttpPost]
         [SwaggerOperation("add a product")]
         public async Task<IActionResult> AddAsync([FromBody] AddProductRequest request)
@@ -27,6 +28,7 @@ namespace CleanTemplate.Api.Controllers.v1.Products
             return new ApiResult<int>(result);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "Permission:Products.Read")]
         [HttpGet]
         [SwaggerOperation("get a product by id")]
         public async Task<IActionResult> GetByIdAsync([FromQuery] int productId)
@@ -35,6 +37,7 @@ namespace CleanTemplate.Api.Controllers.v1.Products
             return new ApiResult<ProductQueryModel>(result);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "Permission:Products.Read")]
         [HttpGet("all")]
         [SwaggerOperation("get all products")]
         public async Task<IActionResult> GetAllAsync(GetProductsRequest request)
@@ -45,6 +48,7 @@ namespace CleanTemplate.Api.Controllers.v1.Products
             return new ApiResult<PagedResult<Product>>(result);
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "Permission:Products.Read")]
         [HttpGet("cache-redis")]
         [SwaggerOperation("get a product from cache. this is a example for how to use cache")]
         public async Task<IActionResult> ReadFromCacheAsync([FromQuery] int productId)

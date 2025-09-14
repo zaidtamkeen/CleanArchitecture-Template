@@ -4,7 +4,6 @@ using CleanTemplate.Common.General;
 using CleanTemplate.Domain.Entities;
 using CleanTemplate.Domain.IRepositories;
 using CleanTemplate.Persistence.Db;
-using CleanTemplate.Persistence.Jwt;
 using CleanTemplate.Persistence.Repositories;
 
 namespace CleanTemplate.ApiFramework.Configuration
@@ -21,19 +20,18 @@ namespace CleanTemplate.ApiFramework.Configuration
             var commonAssembly = typeof(SiteSettings).Assembly;
             var entitiesAssembly = typeof(IEntity).Assembly;
             var dataAssembly = typeof(AppDbContext).Assembly;
-            var servicesAssembly = typeof(JwtService).Assembly;
-
-            containerBuilder.RegisterAssemblyTypes(commonAssembly, entitiesAssembly, dataAssembly, servicesAssembly)
+            // لم يعد هناك JwtService محلي بعد التحول إلى Tamkeen.IdentityService.
+            containerBuilder.RegisterAssemblyTypes(commonAssembly, entitiesAssembly, dataAssembly)
                 .AssignableTo<IScopedDependency>()
                 .AsImplementedInterfaces()
                 .InstancePerLifetimeScope();
 
-            containerBuilder.RegisterAssemblyTypes(commonAssembly, entitiesAssembly, dataAssembly, servicesAssembly)
+            containerBuilder.RegisterAssemblyTypes(commonAssembly, entitiesAssembly, dataAssembly)
                 .AssignableTo<ITransientDependency>()
                 .AsImplementedInterfaces()
                 .InstancePerDependency();
 
-            containerBuilder.RegisterAssemblyTypes(commonAssembly, entitiesAssembly, dataAssembly, servicesAssembly)
+            containerBuilder.RegisterAssemblyTypes(commonAssembly, entitiesAssembly, dataAssembly)
                 .AssignableTo<ISingletonDependency>()
                 .AsImplementedInterfaces()
                 .SingleInstance();

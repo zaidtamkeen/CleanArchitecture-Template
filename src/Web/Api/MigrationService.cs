@@ -1,5 +1,6 @@
 ﻿using CleanTemplate.Persistence.Db;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace CleanTemplate.Api
 {
@@ -26,16 +27,24 @@ namespace CleanTemplate.Api
             using var scope = _serviceProvider.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-            // Apply Migration
             try
             {
-                context.Database.Migrate();
+                // إذا لم توجد أي Migrations في المشروع، فعند التطوير قم بإنشاء المخطط مباشرةً.
+                // هذا يمنع أخطاء مثل: Invalid object name 'Products'.
+                var hasMigrations = context.Database.GetMigrations().Any();
+                if (!hasMigrations)
+                {
+                    context.Database.EnsureCreated();
+                }
+                else
+                {
+                    context.Database.Migrate();
+                }
             }
             catch (Exception ex)
             {
-                // Log the error or handle it in some way
                 var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-                logger.LogError(ex, "An error occurred while migrating the database.");
+                logger.LogError(ex, "An error occurred while migrating or creating the database.");
             }
         }
     }

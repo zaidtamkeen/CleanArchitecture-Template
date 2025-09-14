@@ -2,13 +2,12 @@
 {
     using Common.Utilities;
     using Domain.Entities;
-    using Domain.Entities.Users;
-    using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+    using Microsoft.EntityFrameworkCore;
     using Microsoft.EntityFrameworkCore;
     using System.Threading;
     using System.Threading.Tasks;
 
-    public class AppDbContext : IdentityDbContext<User, Role, int>, IAppDbContext
+    public class AppDbContext : DbContext, IAppDbContext
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
@@ -22,9 +21,11 @@
             base.OnModelCreating(modelBuilder);
 
             var entitiesAssembly = typeof(IEntity).Assembly;
+            var persistenceAssembly = typeof(AppDbContext).Assembly;
 
             modelBuilder.RegisterAllEntities<IEntity>(entitiesAssembly);
-            modelBuilder.ApplyConfigurationsFromAssembly(typeof(IEntity).Assembly);
+            // Apply configurations from the Persistence assembly (where configurations live)
+            modelBuilder.ApplyConfigurationsFromAssembly(persistenceAssembly);
             modelBuilder.AddPluralizingTableNameConvention();
         }
 

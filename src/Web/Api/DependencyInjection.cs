@@ -9,8 +9,6 @@ namespace CleanTemplate.Api
     using Common.Behaviours;
     using Common.General;
     using Common.Utilities;
-    using Domain.Entities.Users;
-    using Domain.IRepositories;
     using Filters;
     using FluentValidation;
     using FluentValidation.AspNetCore;
@@ -19,7 +17,6 @@ namespace CleanTemplate.Api
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Diagnostics.HealthChecks;
     using Microsoft.AspNetCore.Hosting;
-    using Microsoft.AspNetCore.Identity;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
@@ -54,12 +51,45 @@ namespace CleanTemplate.Api
 
             services.AddSwaggerOptions();
             services.AddHttpContextAccessor();
-            services.AddCustomIdentity(siteSettings.IdentitySettings);
-            services.AddJwtAuthentication(siteSettings.JwtSettings);
+            services.AddScoped<CleanTemplate.Application.Abstractions.ICurrentUser, CleanTemplate.Api.Auth.CurrentUser>();
+
+            // Configure external authentication against Tamkeen.IdentityService using JwtBearer
+            services.AddExternalJwtAuthentication(configuration);
+
+            // Add authorization with a fallback policy (require authenticated users by default)
+            services.AddAuthorization(options =>
+            {
+                options.FallbackPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
+                    .RequireAuthenticatedUser()
+                    .Build();
+
+                // Register dynamic, service-name-aware policies (scopes/permissions)
+                CleanTemplate.Api.Auth.AuthorizationPolicies.Register(options, configuration);
+            });
+
+            // Register dynamic policy provider and handlers (permissions/scopes)
+            services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationPolicyProvider, CleanTemplate.Api.Auth.DynamicAuthorizationPolicyProvider>();
+            services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, CleanTemplate.Api.Auth.HasPermissionHandler>();
+            services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, CleanTemplate.Api.Auth.HasScopeHandler>();
+
             services.AddCleanArchControllers();
             services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
             services.AddPolyCache(configuration);
             services.AddCustomFluentValidation();
+
+            // Identity token provider (API or gRPC) based on settings
+            var identityTransport = (configuration["Identity:Transport"] ?? "Api").ToLowerInvariant();
+            if (identityTransport == "grpc")
+            {
+                services.AddScoped<CleanTemplate.Api.External.IIdentityTokenProvider, CleanTemplate.Api.External.GrpcIdentityTokenProvider>();
+            }
+            else
+            {
+                services.AddScoped<CleanTemplate.Api.External.IIdentityTokenProvider, CleanTemplate.Api.External.ApiIdentityTokenProvider>();
+            }
+
+            // Example typed HTTP client for PayMobile integration using client credentials
+            services.AddHttpClient<CleanTemplate.Api.External.IPayMobileClient, CleanTemplate.Api.External.PayMobileClient>();
 
             services.AddHealthChecks()
                     .AddSqlServer(appOptions.WriteDatabaseConnectionString)
@@ -70,6 +100,7 @@ namespace CleanTemplate.Api
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(PerformanceBehaviour<,>));
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(UnhandledExceptionBehaviour<,>));
+            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(CleanTemplate.Application.Behaviors.AuthorizationBehavior<,>));
 
             // Register the MigrationService
             services.AddScoped<IMigrationService, MigrationService>();
@@ -260,8 +291,15 @@ namespace CleanTemplate.Api
         }
         #endregion
 
-        public static void AddJwtAuthentication(this IServiceCollection services, JwtSettings jwtSettings)
+        // External JwtBearer auth against Tamkeen.IdentityService (OIDC/OAuth2)
+        public static void AddExternalJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
         {
+            var authority = configuration["Identity:Authority"];
+            var audience = configuration["Identity:Audience"];
+            var requireHttps = true;
+            if (bool.TryParse(configuration["Identity:RequireHttpsMetadata"], out var r))
+                requireHttps = r;
+
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -269,71 +307,19 @@ namespace CleanTemplate.Api
                 options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
             }).AddJwtBearer(options =>
             {
-                var secretKey = Encoding.UTF8.GetBytes(jwtSettings.SecretKey);
-                var encryptionKey = Encoding.UTF8.GetBytes(jwtSettings.EncryptKey);
+                options.Authority = authority;
+                options.Audience = audience;
+                options.RequireHttpsMetadata = requireHttps;
 
-                var validationParameters = new TokenValidationParameters
+                options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    ClockSkew = TimeSpan.Zero, // default: 5 min
-                    RequireSignedTokens = true,
-
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(secretKey),
-
-                    RequireExpirationTime = true,
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
                     ValidateLifetime = true,
-
-                    ValidateAudience = true, //default : false
-                    ValidAudience = jwtSettings.Audience,
-
-                    ValidateIssuer = true, //default : false
-                    ValidIssuer = jwtSettings.Issuer,
-
-                    TokenDecryptionKey = new SymmetricSecurityKey(encryptionKey)
                 };
-
-                options.RequireHttpsMetadata = false;
-                options.SaveToken = true;
-                options.TokenValidationParameters = validationParameters;
 
                 options.Events = new JwtBearerEvents
                 {
-                    OnAuthenticationFailed = context =>
-                    {
-                        if (context.Exception != null)
-                            throw new CleanArchAppException(ApiResultStatusCode.UnAuthorized, "Authentication failed.", HttpStatusCode.Unauthorized, context.Exception, null);
-
-                        return Task.CompletedTask;
-                    },
-                    OnTokenValidated = async context =>
-                    {
-                        //var signInManager = context.HttpContext.RequestServices.GetRequiredService<SignInManager<User>>();
-                        var userRepository = context.HttpContext.RequestServices.GetRequiredService<IUserRepository>();
-
-                        var claimsIdentity = context.Principal?.Identity as ClaimsIdentity;
-                        if (claimsIdentity?.Claims.Any() != true)
-                            context.Fail("This token has no claims.");
-
-                        //var securityStamp = claimsIdentity.FindFirstValue(new ClaimsIdentityOptions().SecurityStampClaimType);
-                        //if (!securityStamp.HasValue())
-                        //    context.Fail("This token has no security stamp");
-
-                        //Find user and token from database and perform your custom validation
-                        var userId = claimsIdentity.GetUserId<int>();
-                        var user = await userRepository.GetByIdAsync(context.HttpContext.RequestAborted, userId);
-
-                        //if (user.SecurityStamp != Guid.Parse(securityStamp))
-                        //    context.Fail("Token security stamp is not valid.");
-
-                        //var validatedUser = await signInManager.ValidateSecurityStampAsync(context.Principal);
-                        //if (validatedUser == null)
-                        //    context.Fail("Token security stamp is not valid.");
-
-                        if (!user.IsActive)
-                            context.Fail("User is not active.");
-
-                        await userRepository.UpdateLastLoginDateAsync(user, context.HttpContext.RequestAborted);
-                    },
                     OnChallenge = context =>
                     {
                         if (context.AuthenticateFailure != null)
@@ -355,23 +341,6 @@ namespace CleanTemplate.Api
             services.AddCors();
         }
 
-        public static void AddCustomIdentity(this IServiceCollection services, IdentitySettings settings)
-        {
-            services.AddIdentity<User, Role>(identityOptions =>
-            {
-                //Password Settings
-                identityOptions.Password.RequireDigit = settings.PasswordRequireDigit;
-                identityOptions.Password.RequiredLength = settings.PasswordRequiredLength;
-                identityOptions.Password.RequireNonAlphanumeric = settings.PasswordRequireNonAlphanumeric;
-                identityOptions.Password.RequireUppercase = settings.PasswordRequireUppercase;
-                identityOptions.Password.RequireLowercase = settings.PasswordRequireLowercase;
-
-                //UserName Settings
-                identityOptions.User.RequireUniqueEmail = settings.RequireUniqueEmail;
-            })
-            .AddEntityFrameworkStores<AppDbContext>()
-            .AddDefaultTokenProviders();
-        }
 
         public static void AddCustomFluentValidation(this IServiceCollection services)
         {
