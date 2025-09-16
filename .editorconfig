@@ -1,0 +1,14 @@
+root = true
+
+[*.{cs,vb}]
+dotnet_analyzer_diagnostic.severity = warning
+# XML docs: warn locally; later we raise to error in CI via MSBuild
+dotnet_diagnostic.CS1591.severity = warning
+
+csharp_style_var_for_built_in_types = true:suggestion
+csharp_style_expression_bodied_methods = true:suggestion
+csharp_style_expression_bodied_properties = true:suggestion
+csharp_style_prefer_switch_expression = true:suggestion
+csharp_new_line_before_open_brace = all
+csharp_prefer_braces = true:suggestion
+
